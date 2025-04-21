@@ -97,7 +97,7 @@ if uploaded_file:
 
                         # ✅ USE YOUR DEPLOYED API URL HERE
                         response = requests.post(
-                            "https://backend-pescoapp-production.up.railway.app/",
+                            "https://wapdaapp-production.up.railway.app/",
                             json={"account_number": acc_str}
                         )
 
