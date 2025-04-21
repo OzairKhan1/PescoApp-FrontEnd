@@ -92,7 +92,8 @@ if uploaded_file:
                             customer_ids.append("")
                             continue
 
-                        response = requests.post("web-production-a30d.up.railway.app:5000/get_customer_id", json={"account_number": acc_str})
+                        # ✅ Fixed: Added 'https://' to the URL
+                        response = requests.post("https://web-production-a30d.up.railway.app/get_customer_id", json={"account_number": acc_str})
 
                         if response.status_code == 200:
                             cid = response.json().get("customer_id", "")
