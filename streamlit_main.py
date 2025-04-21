@@ -7,14 +7,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 import io
 
 # ---------------------------------------------
 # Streamlit UI
 # ---------------------------------------------
+
 st.markdown("""
     <style>
         .main {
@@ -58,7 +57,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Use session_state to preserve downloaded file
 if "excel_data" not in st.session_state:
     st.session_state.excel_data = None
 
@@ -67,7 +65,16 @@ uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "x
 if uploaded_file:
     try:
         df = pd.read_excel(uploaded_file, engine="openpyxl")
-        df = df.where(pd.notnull(df), "")  # Replace NaN with empty strings
+
+        # Clean column names
+        df.columns = df.columns.str.replace(r'\s+', ' ', regex=True).str.strip()
+
+        # Convert all columns to string to avoid mixed types
+        df = df.astype(str)
+
+        # Replace 'nan' strings (from previous conversion) with empty string
+        df.replace("nan", "", inplace=True)
+
         st.success("✅ File uploaded successfully.")
         st.write("📄 Preview of Uploaded Data:")
         st.dataframe(df)
@@ -97,13 +104,8 @@ if uploaded_file:
                     chrome_options.add_argument("--no-sandbox")
                     chrome_options.add_argument("--disable-dev-shm-usage")
 
-                    try:
-                        service = Service(ChromeDriverManager().install())
-                        driver = webdriver.Chrome(service=service, options=chrome_options)
-                        wait = WebDriverWait(driver, 10)
-                    except WebDriverException as e:
-                        st.error("❌ Failed to launch Chrome WebDriver. Ensure it's installed properly.")
-                        st.stop()
+                    driver = webdriver.Chrome(service=Service(), options=chrome_options)
+                    wait = WebDriverWait(driver, 10)
 
                     try:
                         driver.get("https://bill.pitc.com.pk/pescobill")
@@ -144,8 +146,7 @@ if uploaded_file:
                                 driver.get("https://bill.pitc.com.pk/pescobill")
                                 time.sleep(1)
 
-                            except Exception as e:
-                                st.warning(f"⚠️ Error processing {acc_str}: {e}")
+                            except Exception:
                                 df.at[index, target_col] = "ERROR"
 
                     finally:
@@ -159,7 +160,6 @@ if uploaded_file:
                     def to_excel(df: pd.DataFrame):
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                            df[selected_col] = df[selected_col].astype(str)  # Force text
                             df.to_excel(writer, index=False, sheet_name="Data")
                         return output.getvalue()
 
@@ -168,7 +168,6 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Error reading file: {e}")
 
-# Keep download button even after refresh
 if st.session_state.excel_data:
     st.download_button(
         label="📥 Download Updated Excel",
