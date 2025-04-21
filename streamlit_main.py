@@ -92,8 +92,9 @@ if uploaded_file:
                             customer_ids.append("")
                             continue
 
-                        # ✅ Fixed: Added 'https://' to the URL
-                        response = requests.post("https://web-production-a30d.up.railway.app/get_customer_id", json={"account_number": acc_str})
+                        # ✅ Updated with new Railway backend URL
+                        api_url = "https://pescoapp-backend-production.up.railway.app/get_customer_id"
+                        response = requests.post(api_url, json={"account_number": acc_str})
 
                         if response.status_code == 200:
                             cid = response.json().get("customer_id", "")
